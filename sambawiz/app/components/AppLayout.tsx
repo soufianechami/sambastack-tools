@@ -5,6 +5,9 @@ import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
   SidebarHeader,
   SidebarInset,
   SidebarMenu,
@@ -12,10 +15,20 @@ import {
   SidebarMenuItem,
   SidebarProvider,
   SidebarRail,
+  SidebarSeparator,
   SidebarTrigger,
 } from '@/components/ui/sidebar';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Wrench, Rocket, Bot, Home } from 'lucide-react';
+import {
+  Wrench,
+  Rocket,
+  Bot,
+  SlidersHorizontal,
+  BookOpen,
+  MessageCircleQuestion,
+  Phone,
+  Server,
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
 import { useRouter, usePathname } from 'next/navigation';
@@ -25,13 +38,30 @@ interface AppLayoutProps {
   children: React.ReactNode;
 }
 
+const externalLinks = [
+  {
+    title: 'Documentation',
+    url: 'https://docs.sambanova.ai/docs/en/sambastack/getting-started/introduction',
+    icon: BookOpen,
+  },
+  {
+    title: 'Community',
+    url: 'https://community.sambanova.ai/',
+    icon: MessageCircleQuestion,
+  },
+  {
+    title: 'Contact Us',
+    url: 'https://sambanova.ai/contact',
+    icon: Phone,
+  },
+];
+
 export default function AppLayout({ children }: AppLayoutProps) {
   const router = useRouter();
   const pathname = usePathname();
 
-  // Derive selected item directly from pathname instead of using state
   const getSelectedItem = () => {
-    if (pathname === '/') return 'home';
+    if (pathname === '/') return 'environment';
     if (pathname === '/bundle-builder') return 'bundle-builder';
     if (pathname === '/bundle-deployment') return 'bundle-deployment';
     if (pathname === '/playground') return 'playground';
@@ -53,7 +83,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
     setShowErrorDialog,
   } = useAppContext();
 
-  const navItems = [
+  const platformItems = [
     {
       key: 'bundle-builder',
       label: 'Bundle Builder',
@@ -92,63 +122,103 @@ export default function AppLayout({ children }: AppLayoutProps) {
       />
       <SidebarProvider>
         <Sidebar collapsible="icon">
-          <SidebarHeader className="py-4 px-2">
-            <div className="flex items-center justify-center group-data-[state=collapsed]/sidebar-wrapper:hidden">
-              <Image
-                src="/sidebar-logo.svg"
-                alt="SambaNova Logo"
-                width={150}
-                height={40}
-                style={{ width: '150px', height: 'auto' }}
-                priority
-              />
+          {/* Header — logo */}
+          <SidebarHeader>
+            <div className="flex h-12 items-center px-2">
+              <div className="group-data-[state=collapsed]/sidebar-wrapper:hidden">
+                <Image
+                  src="/sidebar-logo.svg"
+                  alt="SambaNova"
+                  width={130}
+                  height={34}
+                  style={{ width: '130px', height: 'auto' }}
+                  priority
+                />
+              </div>
+              <div className="hidden group-data-[state=collapsed]/sidebar-wrapper:flex justify-center w-full">
+                <Image
+                  src="/favicon.ico"
+                  alt="SambaNova"
+                  width={24}
+                  height={24}
+                  style={{ width: '24px', height: '24px' }}
+                />
+              </div>
             </div>
           </SidebarHeader>
 
+          <SidebarSeparator />
+
           <SidebarContent>
-            <SidebarMenu>
-              {navItems.map(({ key, label, icon: Icon, path, disabled }) => (
-                <SidebarMenuItem key={key}>
-                  <SidebarMenuButton
-                    isActive={selectedItem === key}
-                    disabled={disabled}
-                    onClick={() => {
-                      if (!disabled) {
-                        router.push(path);
-                      }
-                    }}
-                    tooltip={label}
-                    className={cn(
-                      disabled && 'opacity-50 cursor-not-allowed'
-                    )}
-                  >
-                    <Icon />
-                    <span>{label}</span>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
+            {/* Platform — primary tools */}
+            <SidebarGroup>
+              <SidebarGroupLabel>Platform</SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {platformItems.map(({ key, label, icon: Icon, path, disabled }) => (
+                    <SidebarMenuItem key={key}>
+                      <SidebarMenuButton
+                        isActive={selectedItem === key}
+                        disabled={disabled}
+                        onClick={() => { if (!disabled) router.push(path); }}
+                        tooltip={label}
+                        className={cn(disabled && 'opacity-50 cursor-not-allowed')}
+                      >
+                        <Icon />
+                        <span>{label}</span>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+
+            {/* Configuration — setup/env, accessed infrequently */}
+            <SidebarGroup>
+              <SidebarGroupLabel>Configuration</SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      isActive={selectedItem === 'environment'}
+                      onClick={() => router.push('/')}
+                      tooltip="Environment"
+                    >
+                      <SlidersHorizontal />
+                      <span>Environment</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+
+            {/* External resource links — pushed to bottom */}
+            <SidebarGroup className="mt-auto">
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {externalLinks.map(({ title, url, icon: Icon }) => (
+                    <SidebarMenuItem key={title}>
+                      <SidebarMenuButton
+                        tooltip={title}
+                        render={<a href={url} target="_blank" rel="noopener noreferrer" />}
+                      >
+                        <Icon />
+                        <span>{title}</span>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
           </SidebarContent>
 
+          {/* Footer — active env display (informational only) */}
+          <SidebarSeparator />
           <SidebarFooter className="pb-4 px-2 flex flex-col gap-2">
-            {/* Fallback home button when kubeconfig validation failed and not on home page */}
-            {validationError && pathname !== '/' && (
-              <button
-                onClick={() => router.push('/')}
-                className="flex items-center justify-center rounded-lg bg-muted border border-border p-3 cursor-pointer transition-all hover:bg-muted/80 hover:scale-[1.02]"
-              >
-                <Home className="size-5 text-primary" />
-              </button>
-            )}
-
-            {/* Environment version display - clickable to go to home */}
-            {envVersion && envName && (
-              <button
-                onClick={() => router.push('/')}
-                className="w-full rounded-lg bg-muted border border-border p-3 cursor-pointer transition-all hover:bg-muted/80 hover:scale-[1.02] text-left group-data-[state=collapsed]/sidebar-wrapper:flex group-data-[state=collapsed]/sidebar-wrapper:justify-center"
-              >
+            {envVersion && envName ? (
+              <div className="w-full rounded-lg bg-muted border border-border p-3 group-data-[state=collapsed]/sidebar-wrapper:flex group-data-[state=collapsed]/sidebar-wrapper:justify-center">
                 <div className="flex items-center justify-center gap-1.5 mb-1 group-data-[state=collapsed]/sidebar-wrapper:mb-0">
-                  <Home className="size-4 text-primary shrink-0" />
+                  <Server className="size-4 text-primary shrink-0" />
                   <span className="text-sm font-semibold text-primary group-data-[state=collapsed]/sidebar-wrapper:hidden truncate">
                     {envName}
                   </span>
@@ -161,10 +231,9 @@ export default function AppLayout({ children }: AppLayoutProps) {
                     namespace: {namespace}
                   </p>
                 )}
-              </button>
-            )}
+              </div>
+            ) : null}
 
-            {/* App version display */}
             {appVersion && (
               <div className="rounded bg-black/[0.02] p-2 text-center group-data-[state=collapsed]/sidebar-wrapper:hidden">
                 <span className="text-[0.7rem] font-medium text-muted-foreground">
